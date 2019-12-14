@@ -1,0 +1,31 @@
+From 656e82ce108941988689baeaa8258c183d6ae27e Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Fri, 1 Nov 2019 22:03:00 +0800
+Subject: [PATCH] crypto: inside-secure - Add missed clk_disable_unprepare
+
+safexcel_remove misses disabling priv->reg_clk like what is done when
+probe fails.
+Add the missed call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/crypto/inside-secure/safexcel.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/crypto/inside-secure/safexcel.c b/drivers/crypto/inside-secure/safexcel.c
+index 4ab1bde8dd9b..24c0f2404ec6 100644
+--- a/drivers/crypto/inside-secure/safexcel.c
++++ b/drivers/crypto/inside-secure/safexcel.c
+@@ -1623,6 +1623,7 @@ static int safexcel_remove(struct platform_device *pdev)
+ 	safexcel_unregister_algorithms(priv);
+ 	safexcel_hw_reset_rings(priv);
+ 
++	clk_disable_unprepare(priv->reg_clk);
+ 	clk_disable_unprepare(priv->clk);
+ 
+ 	for (i = 0; i < priv->config.rings; i++)
+-- 
+2.23.0
+
+.0
+

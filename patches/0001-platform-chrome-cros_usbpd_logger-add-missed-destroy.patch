@@ -1,0 +1,31 @@
+From 704f138f18fc6ac3373d94254bbd7460984d505b Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Wed, 13 Nov 2019 14:22:31 +0800
+Subject: [PATCH] platform/chrome: cros_usbpd_logger: add missed
+ destroy_workqueue in remove
+
+The driver forgets to destroy workqueue in remove.
+Add the missed call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/platform/chrome/cros_usbpd_logger.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/platform/chrome/cros_usbpd_logger.c b/drivers/platform/chrome/cros_usbpd_logger.c
+index 2430e8b82810..374cdd1e868a 100644
+--- a/drivers/platform/chrome/cros_usbpd_logger.c
++++ b/drivers/platform/chrome/cros_usbpd_logger.c
+@@ -224,6 +224,7 @@ static int cros_usbpd_logger_remove(struct platform_device *pd)
+ 	struct logger_data *logger = platform_get_drvdata(pd);
+ 
+ 	cancel_delayed_work_sync(&logger->log_work);
++	destroy_workqueue(logger->log_workqueue);
+ 
+ 	return 0;
+ }
+-- 
+2.23.0
+
+.0
+

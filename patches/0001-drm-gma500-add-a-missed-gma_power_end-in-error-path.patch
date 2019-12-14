@@ -1,0 +1,30 @@
+From 8fe01630502430292eda8a48f4abe8eb1d775e92 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Mon, 9 Dec 2019 16:23:51 +0800
+Subject: [PATCH] drm/gma500: add a missed gma_power_end in error path
+
+oaktrail_lvds_mode_set() misses a gma_power_end() in an error path.
+Add the call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/gpu/drm/gma500/oaktrail_lvds.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/gma500/oaktrail_lvds.c b/drivers/gpu/drm/gma500/oaktrail_lvds.c
+index 7390403ea1b7..582e09597500 100644
+--- a/drivers/gpu/drm/gma500/oaktrail_lvds.c
++++ b/drivers/gpu/drm/gma500/oaktrail_lvds.c
+@@ -117,6 +117,7 @@ static void oaktrail_lvds_mode_set(struct drm_encoder *encoder,
+ 
+ 	if (!connector) {
+ 		DRM_ERROR("Couldn't find connector when setting mode");
++		gma_power_end(dev);
+ 		return;
+ 	}
+ 
+-- 
+2.24.0
+
+.0
+

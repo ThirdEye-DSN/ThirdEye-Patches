@@ -1,0 +1,32 @@
+From 9635f0d58375b66b62dc70547147ad4e3c82e8e3 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Mon, 18 Nov 2019 16:53:00 +0800
+Subject: [PATCH] media: usb: go7007: s2250-board: add missed
+ i2c_unregister_device
+
+The driver forgets to call i2c_unregister_device in remove like what is
+done in probe failure.
+Add the missed call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/media/usb/go7007/s2250-board.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/media/usb/go7007/s2250-board.c b/drivers/media/usb/go7007/s2250-board.c
+index 49e75a1a1f3f..b9e45124673b 100644
+--- a/drivers/media/usb/go7007/s2250-board.c
++++ b/drivers/media/usb/go7007/s2250-board.c
+@@ -607,6 +607,7 @@ static int s2250_remove(struct i2c_client *client)
+ {
+ 	struct s2250 *state = to_state(i2c_get_clientdata(client));
+ 
++	i2c_unregister_device(state->audio);
+ 	v4l2_device_unregister_subdev(&state->sd);
+ 	v4l2_ctrl_handler_free(&state->hdl);
+ 	kfree(state);
+-- 
+2.24.0
+
+.0
+

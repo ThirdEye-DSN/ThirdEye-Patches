@@ -1,0 +1,32 @@
+From b797d12786e345803053fa8aed5ebe50d109121c Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Sat, 9 Nov 2019 15:26:29 +0800
+Subject: [PATCH] spi: nxp-fspi: Use devm API to fix missed unregistration of
+ controller
+
+This driver forgets to unregister controller when remove.
+Use devm API to unregister it automatically to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/spi/spi-nxp-fspi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/spi/spi-nxp-fspi.c b/drivers/spi/spi-nxp-fspi.c
+index 501b923f2c27..c36bb1bb464e 100644
+--- a/drivers/spi/spi-nxp-fspi.c
++++ b/drivers/spi/spi-nxp-fspi.c
+@@ -1027,7 +1027,7 @@ static int nxp_fspi_probe(struct platform_device *pdev)
+ 
+ 	ctlr->dev.of_node = np;
+ 
+-	ret = spi_register_controller(ctlr);
++	ret = devm_spi_register_controller(&pdev->dev, ctlr);
+ 	if (ret)
+ 		goto err_destroy_mutex;
+ 
+-- 
+2.23.0
+
+.0
+

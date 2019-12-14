@@ -1,0 +1,36 @@
+From 53ead064b3be39697dc32a288bd1a0b58767ffac Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Thu, 5 Dec 2019 23:23:30 +0800
+Subject: [PATCH] rtc: stm32: add missed clk_disable_unprepare in error path of
+ resume
+
+The resume() forgets to call clk_disable_unprepare() when failed.
+Add the missed call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/rtc/rtc-stm32.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/rtc/rtc-stm32.c b/drivers/rtc/rtc-stm32.c
+index 781cabb2afca..d774aa18f57a 100644
+--- a/drivers/rtc/rtc-stm32.c
++++ b/drivers/rtc/rtc-stm32.c
+@@ -897,8 +897,11 @@ static int stm32_rtc_resume(struct device *dev)
+ 	}
+ 
+ 	ret = stm32_rtc_wait_sync(rtc);
+-	if (ret < 0)
++	if (ret < 0) {
++		if (rtc->data->has_pclk)
++			clk_disable_unprepare(rtc->pclk);
+ 		return ret;
++	}
+ 
+ 	if (device_may_wakeup(dev))
+ 		return disable_irq_wake(rtc->irq_alarm);
+-- 
+2.24.0
+
+.0
+

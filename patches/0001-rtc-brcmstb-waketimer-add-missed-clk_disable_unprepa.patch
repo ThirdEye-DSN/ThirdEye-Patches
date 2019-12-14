@@ -1,0 +1,34 @@
+From 3d52e34cbeffaba9f6c5f5cec8c1e42e293681ee Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Tue, 5 Nov 2019 23:51:35 +0800
+Subject: [PATCH v2] rtc: brcmstb-waketimer: add missed clk_disable_unprepare
+
+This driver forgets to disable and unprepare clock when remove.
+Add a call to clk_disable_unprepare to fix it.
+
+Fixes: c4f07ecee22e ("rtc: brcmstb-waketimer: Add Broadcom STB wake-timer")
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+Changes in v2:
+  - Remove the check for timer->clk and add fixes tag.
+
+ drivers/rtc/rtc-brcmstb-waketimer.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/rtc/rtc-brcmstb-waketimer.c b/drivers/rtc/rtc-brcmstb-waketimer.c
+index 3e9800f9878a..82d2ab0b3e9c 100644
+--- a/drivers/rtc/rtc-brcmstb-waketimer.c
++++ b/drivers/rtc/rtc-brcmstb-waketimer.c
+@@ -277,6 +277,7 @@ static int brcmstb_waketmr_remove(struct platform_device *pdev)
+ 	struct brcmstb_waketmr *timer = dev_get_drvdata(&pdev->dev);
+ 
+ 	unregister_reboot_notifier(&timer->reboot_notifier);
++	clk_disable_unprepare(timer->clk);
+ 
+ 	return 0;
+ }
+-- 
+2.23.0
+
+.0
+

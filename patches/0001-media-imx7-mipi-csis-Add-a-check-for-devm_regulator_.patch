@@ -1,0 +1,49 @@
+From eac9a919e542a0f3bb10b65f7f505d2bc7d04e20 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Tue, 15 Oct 2019 21:14:41 +0800
+Subject: [PATCH v2] media: imx7-mipi-csis: Add a check for devm_regulator_get
+
+devm_regulator_get may return an error but mipi_csis_phy_init misses
+a check for it.
+This may lead to problems when regulator_set_voltage uses the unchecked
+pointer.
+This patch adds a check for devm_regulator_get to avoid potential risk.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+Changes in v2:
+  - Add a check in mipi_csis_probe for the modified mipi_csis_phy_init.
+
+ drivers/staging/media/imx/imx7-mipi-csis.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx7-mipi-csis.c b/drivers/staging/media/imx/imx7-mipi-csis.c
+index 73d8354e618c..e8a6acaa969e 100644
+--- a/drivers/staging/media/imx/imx7-mipi-csis.c
++++ b/drivers/staging/media/imx/imx7-mipi-csis.c
+@@ -350,6 +350,8 @@ static void mipi_csis_sw_reset(struct csi_state *state)
+ static int mipi_csis_phy_init(struct csi_state *state)
+ {
+ 	state->mipi_phy_regulator = devm_regulator_get(state->dev, "phy");
++	if (IS_ERR(state->mipi_phy_regulator))
++		return PTR_ERR(state->mipi_phy_regulator);
+ 
+ 	return regulator_set_voltage(state->mipi_phy_regulator, 1000000,
+ 				     1000000);
+@@ -966,7 +968,10 @@ static int mipi_csis_probe(struct platform_device *pdev)
+ 		return ret;
+ 	}
+ 
+-	mipi_csis_phy_init(state);
++	ret = mipi_csis_phy_init(state);
++	if (ret < 0)
++		return ret;
++
+ 	mipi_csis_phy_reset(state);
+ 
+ 	mem_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+-- 
+2.20.1
+
+.1
+

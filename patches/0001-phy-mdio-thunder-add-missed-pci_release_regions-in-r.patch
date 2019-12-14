@@ -1,0 +1,31 @@
+From 20a3c8dbaeaed890481c140261a283e45165da2f Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Fri, 6 Dec 2019 15:14:58 +0800
+Subject: [PATCH] phy: mdio-thunder: add missed pci_release_regions in remove
+
+The driver forgets to call pci_release_regions() in remove like that
+in probe failure.
+Add the missed call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/net/phy/mdio-thunder.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/phy/mdio-thunder.c b/drivers/net/phy/mdio-thunder.c
+index b6128ae7f14f..2a97938d1972 100644
+--- a/drivers/net/phy/mdio-thunder.c
++++ b/drivers/net/phy/mdio-thunder.c
+@@ -129,6 +129,7 @@ static void thunder_mdiobus_pci_remove(struct pci_dev *pdev)
+ 		mdiobus_free(bus->mii_bus);
+ 		oct_mdio_writeq(0, bus->register_base + SMI_EN);
+ 	}
++	pci_release_regions(pdev);
+ 	pci_set_drvdata(pdev, NULL);
+ }
+ 
+-- 
+2.24.0
+
+.0
+

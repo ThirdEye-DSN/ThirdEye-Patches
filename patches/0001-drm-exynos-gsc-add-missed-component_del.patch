@@ -1,0 +1,31 @@
+From 6415699c9ca050f92c9496c5a5e8c5cfd677a02f Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Thu, 5 Dec 2019 23:18:44 +0800
+Subject: [PATCH resend] drm/exynos: gsc: add missed component_del
+
+The driver forgets to call component_del in remove to match component_add
+in probe.
+Add the missed call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/gpu/drm/exynos/exynos_drm_gsc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/gpu/drm/exynos/exynos_drm_gsc.c b/drivers/gpu/drm/exynos/exynos_drm_gsc.c
+index 7ae087b0504d..88b6fcaa20be 100644
+--- a/drivers/gpu/drm/exynos/exynos_drm_gsc.c
++++ b/drivers/gpu/drm/exynos/exynos_drm_gsc.c
+@@ -1313,6 +1313,7 @@ static int gsc_remove(struct platform_device *pdev)
+ {
+ 	struct device *dev = &pdev->dev;
+ 
++	component_del(dev, &gsc_component_ops);
+ 	pm_runtime_dont_use_autosuspend(dev);
+ 	pm_runtime_disable(dev);
+ 
+-- 
+2.24.0
+
+.0
+

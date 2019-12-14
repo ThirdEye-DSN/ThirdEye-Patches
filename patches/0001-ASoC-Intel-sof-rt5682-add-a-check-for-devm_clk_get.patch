@@ -1,0 +1,38 @@
+From 21125cfb6669bcfb0271a02a9ca22c18cb0497be Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Thu, 17 Oct 2019 10:37:39 +0800
+Subject: [PATCH] ASoC: Intel: sof-rt5682: add a check for devm_clk_get
+
+sof_audio_probe misses a check for devm_clk_get and may cause problems.
+Add a check for it to fix the bug.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ sound/soc/intel/boards/sof_rt5682.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/sound/soc/intel/boards/sof_rt5682.c b/sound/soc/intel/boards/sof_rt5682.c
+index a437567b8cee..6d15c7ff66bf 100644
+--- a/sound/soc/intel/boards/sof_rt5682.c
++++ b/sound/soc/intel/boards/sof_rt5682.c
+@@ -576,6 +576,15 @@ static int sof_audio_probe(struct platform_device *pdev)
+ 	/* need to get main clock from pmc */
+ 	if (sof_rt5682_quirk & SOF_RT5682_MCLK_BYTCHT_EN) {
+ 		ctx->mclk = devm_clk_get(&pdev->dev, "pmc_plt_clk_3");
++		if (IS_ERR(ctx->mclk)) {
++			ret = PTR_ERR(ctx->mclk);
++
++			dev_err(&pdev->dev,
++				"Failed to get MCLK from pmc_plt_clk_3: %d\n",
++				ret);
++			return ret;
++		}
++
+ 		ret = clk_prepare_enable(ctx->mclk);
+ 		if (ret < 0) {
+ 			dev_err(&pdev->dev,
+-- 
+2.20.1
+
+.1
+

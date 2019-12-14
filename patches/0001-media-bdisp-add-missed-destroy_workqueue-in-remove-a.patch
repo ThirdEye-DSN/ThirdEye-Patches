@@ -1,0 +1,68 @@
+From ede6fcc66362461c599cc869074f41e6e9387c1c Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Wed, 13 Nov 2019 14:28:06 +0800
+Subject: [PATCH] media: bdisp: add missed destroy_workqueue in remove and
+ probe failure
+
+The driver forgets to call destroy_workqueue when remove and probe fails.
+Add the missed calls to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/media/platform/sti/bdisp/bdisp-v4l2.c | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/media/platform/sti/bdisp/bdisp-v4l2.c b/drivers/media/platform/sti/bdisp/bdisp-v4l2.c
+index e90f1ba30574..4c0b36236a38 100644
+--- a/drivers/media/platform/sti/bdisp/bdisp-v4l2.c
++++ b/drivers/media/platform/sti/bdisp/bdisp-v4l2.c
+@@ -1275,6 +1275,8 @@ static int bdisp_remove(struct platform_device *pdev)
+ 	if (!IS_ERR(bdisp->clock))
+ 		clk_unprepare(bdisp->clock);
+ 
++	destroy_workqueue(bdisp->work_queue);
++
+ 	dev_dbg(&pdev->dev, "%s driver unloaded\n", pdev->name);
+ 
+ 	return 0;
+@@ -1318,20 +1320,22 @@ static int bdisp_probe(struct platform_device *pdev)
+ 	bdisp->regs = devm_ioremap_resource(dev, res);
+ 	if (IS_ERR(bdisp->regs)) {
+ 		dev_err(dev, "failed to get regs\n");
+-		return PTR_ERR(bdisp->regs);
++		ret = PTR_ERR(bdisp->regs);
++		goto err_wq;
+ 	}
+ 
+ 	bdisp->clock = devm_clk_get(dev, BDISP_NAME);
+ 	if (IS_ERR(bdisp->clock)) {
+ 		dev_err(dev, "failed to get clock\n");
+-		return PTR_ERR(bdisp->clock);
++		ret = PTR_ERR(bdisp->clock);
++		goto err_wq;
+ 	}
+ 
+ 	ret = clk_prepare(bdisp->clock);
+ 	if (ret < 0) {
+ 		dev_err(dev, "clock prepare failed\n");
+ 		bdisp->clock = ERR_PTR(-EINVAL);
+-		return ret;
++		goto err_wq;
+ 	}
+ 
+ 	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
+@@ -1403,7 +1407,8 @@ static int bdisp_probe(struct platform_device *pdev)
+ err_clk:
+ 	if (!IS_ERR(bdisp->clock))
+ 		clk_unprepare(bdisp->clock);
+-
++err_wq:
++	destroy_workqueue(bdisp->work_queue);
+ 	return ret;
+ }
+ 
+-- 
+2.23.0
+
+.0
+

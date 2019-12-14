@@ -1,0 +1,46 @@
+From f201878fa9d11a74cd21bb19e9c5adfa97924cd0 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Sat, 2 Nov 2019 14:11:35 +0800
+Subject: [PATCH] usb: host: fotg210: add missed clk_put calls
+
+The driver forgets to call clk_put when probe fails and remove.
+Add the calls to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/usb/host/fotg210-hcd.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/host/fotg210-hcd.c b/drivers/usb/host/fotg210-hcd.c
+index 9e0c98d6bdb0..f967adf2d8df 100644
+--- a/drivers/usb/host/fotg210-hcd.c
++++ b/drivers/usb/host/fotg210-hcd.c
+@@ -5646,8 +5646,10 @@ static int fotg210_hcd_probe(struct platform_device *pdev)
+ 	return retval;
+ 
+ failed_dis_clk:
+-	if (!IS_ERR(fotg210->pclk))
++	if (!IS_ERR(fotg210->pclk)) {
+ 		clk_disable_unprepare(fotg210->pclk);
++		clk_put(fotg210->pclk);
++	}
+ failed_put_hcd:
+ 	usb_put_hcd(hcd);
+ fail_create_hcd:
+@@ -5665,8 +5667,10 @@ static int fotg210_hcd_remove(struct platform_device *pdev)
+ 	struct usb_hcd *hcd = platform_get_drvdata(pdev);
+ 	struct fotg210_hcd *fotg210 = hcd_to_fotg210(hcd);
+ 
+-	if (!IS_ERR(fotg210->pclk))
++	if (!IS_ERR(fotg210->pclk)) {
+ 		clk_disable_unprepare(fotg210->pclk);
++		clk_put(fotg210->pclk);
++	}
+ 
+ 	usb_remove_hcd(hcd);
+ 	usb_put_hcd(hcd);
+-- 
+2.23.0
+
+.0
+

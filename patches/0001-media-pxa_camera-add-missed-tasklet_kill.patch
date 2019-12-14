@@ -1,0 +1,38 @@
+From 1374ac7c3c849b641de3d3f1451ff8ff5ce11765 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Tue, 3 Dec 2019 18:53:38 +0800
+Subject: [PATCH resend] media: pxa_camera: add missed tasklet_kill
+
+This driver forgets to kill tasklet when probe fails and remove.
+Add the calls to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/media/platform/pxa_camera.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/media/platform/pxa_camera.c b/drivers/media/platform/pxa_camera.c
+index 8d47ea0c33f8..43ae645d866b 100644
+--- a/drivers/media/platform/pxa_camera.c
++++ b/drivers/media/platform/pxa_camera.c
+@@ -2530,6 +2530,7 @@ static int pxa_camera_probe(struct platform_device *pdev)
+ 	v4l2_device_unregister(&pcdev->v4l2_dev);
+ exit_deactivate:
+ 	pxa_camera_deactivate(pcdev);
++	tasklet_kill(&pcdev->task_eof);
+ exit_free_dma:
+ 	dma_release_channel(pcdev->dma_chans[2]);
+ exit_free_dma_u:
+@@ -2544,6 +2545,7 @@ static int pxa_camera_remove(struct platform_device *pdev)
+ 	struct pxa_camera_dev *pcdev = dev_get_drvdata(&pdev->dev);
+ 
+ 	pxa_camera_deactivate(pcdev);
++	tasklet_kill(&pcdev->task_eof);
+ 	dma_release_channel(pcdev->dma_chans[0]);
+ 	dma_release_channel(pcdev->dma_chans[1]);
+ 	dma_release_channel(pcdev->dma_chans[2]);
+-- 
+2.24.0
+
+.0
+

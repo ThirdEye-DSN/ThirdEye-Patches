@@ -1,0 +1,39 @@
+From dfde9cdc813d40e833a33963c810fd880b2852ab Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Mon, 18 Nov 2019 15:24:51 +0800
+Subject: [PATCH] ASoC: wm5100: add missed pm_runtime_disable
+
+The driver forgets to call pm_runtime_disable in remove and
+probe failure.
+Add the calls to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ sound/soc/codecs/wm5100.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/sound/soc/codecs/wm5100.c b/sound/soc/codecs/wm5100.c
+index 4af0e519e623..91cc63c5a51f 100644
+--- a/sound/soc/codecs/wm5100.c
++++ b/sound/soc/codecs/wm5100.c
+@@ -2617,6 +2617,7 @@ static int wm5100_i2c_probe(struct i2c_client *i2c,
+ 	return ret;
+ 
+ err_reset:
++	pm_runtime_disable(&i2c->dev);
+ 	if (i2c->irq)
+ 		free_irq(i2c->irq, wm5100);
+ 	wm5100_free_gpio(i2c);
+@@ -2640,6 +2641,7 @@ static int wm5100_i2c_remove(struct i2c_client *i2c)
+ {
+ 	struct wm5100_priv *wm5100 = i2c_get_clientdata(i2c);
+ 
++	pm_runtime_disable(&i2c->dev);
+ 	if (i2c->irq)
+ 		free_irq(i2c->irq, wm5100);
+ 	wm5100_free_gpio(i2c);
+-- 
+2.24.0
+
+.0
+

@@ -1,0 +1,34 @@
+From 60ef029a8b4b36f54a148ba6dcda39a1695c9bcb Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Wed, 13 Nov 2019 13:51:32 +0800
+Subject: [PATCH] rsxx: add missed destroy_workqueue calls in remove
+
+The driver misses calling destroy_workqueue in remove like what is done
+when probe fails.
+Add the missed calls to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/block/rsxx/core.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/block/rsxx/core.c b/drivers/block/rsxx/core.c
+index 76b73ddf8fd7..10f6368117d8 100644
+--- a/drivers/block/rsxx/core.c
++++ b/drivers/block/rsxx/core.c
+@@ -1000,8 +1000,10 @@ static void rsxx_pci_remove(struct pci_dev *dev)
+ 
+ 	cancel_work_sync(&card->event_work);
+ 
++	destroy_workqueue(card->event_wq);
+ 	rsxx_destroy_dev(card);
+ 	rsxx_dma_destroy(card);
++	destroy_workqueue(card->creg_ctrl.creg_wq);
+ 
+ 	spin_lock_irqsave(&card->irq_lock, flags);
+ 	rsxx_disable_ier_and_isr(card, CR_INTR_ALL);
+-- 
+2.23.0
+
+.0
+

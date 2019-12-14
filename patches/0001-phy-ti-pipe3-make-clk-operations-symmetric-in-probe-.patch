@@ -1,0 +1,61 @@
+From 807097089765992472b4dc8617620142a9450004 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Wed, 4 Dec 2019 19:32:39 +0800
+Subject: [PATCH v2] phy: ti-pipe3: make clk operations symmetric in probe and
+ remove
+
+The driver calls clk_prepare_enable in probe but the corresponding
+clk_disable_unprepare() is in ti_pipe3_disable_clocks().
+Move clk_disable_unprepare() to remove to make them symmetric.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+Changes in v2:
+  - Modify commit message.
+  - Delete the clk_disable_unprepare() in ti_pipe3_disable_clocks().
+
+ drivers/phy/ti/phy-ti-pipe3.c | 18 +++++++-----------
+ 1 file changed, 7 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/phy/ti/phy-ti-pipe3.c b/drivers/phy/ti/phy-ti-pipe3.c
+index edd6859afba8..a87946589eb7 100644
+--- a/drivers/phy/ti/phy-ti-pipe3.c
++++ b/drivers/phy/ti/phy-ti-pipe3.c
+@@ -850,6 +850,12 @@ static int ti_pipe3_probe(struct platform_device *pdev)
+ 
+ static int ti_pipe3_remove(struct platform_device *pdev)
+ {
++	struct ti_pipe3 *phy = platform_get_drvdata(pdev);
++
++	if (phy->mode == PIPE3_MODE_SATA) {
++		clk_disable_unprepare(phy->refclk);
++		phy->sata_refclk_enabled = false;
++	}
+ 	pm_runtime_disable(&pdev->dev);
+ 
+ 	return 0;
+@@ -900,18 +906,8 @@ static void ti_pipe3_disable_clocks(struct ti_pipe3 *phy)
+ {
+ 	if (!IS_ERR(phy->wkupclk))
+ 		clk_disable_unprepare(phy->wkupclk);
+-	if (!IS_ERR(phy->refclk)) {
++	if (!IS_ERR(phy->refclk))
+ 		clk_disable_unprepare(phy->refclk);
+-		/*
+-		 * SATA refclk needs an additional disable as we left it
+-		 * on in probe to avoid Errata i783
+-		 */
+-		if (phy->sata_refclk_enabled) {
+-			clk_disable_unprepare(phy->refclk);
+-			phy->sata_refclk_enabled = false;
+-		}
+-	}
+-
+ 	if (!IS_ERR(phy->div_clk))
+ 		clk_disable_unprepare(phy->div_clk);
+ }
+-- 
+2.24.0
+
+.0
+

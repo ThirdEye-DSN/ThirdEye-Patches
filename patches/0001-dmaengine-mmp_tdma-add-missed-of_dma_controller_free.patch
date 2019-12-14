@@ -1,0 +1,33 @@
+From 2a38a0937522036f29863caba1d322a057140165 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Fri, 15 Nov 2019 16:05:22 +0800
+Subject: [PATCH 1/2] dmaengine: mmp_tdma: add missed of_dma_controller_free
+
+The driver calls of_dma_controller_register in probe but does not free
+it in remove.
+Add the call to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/dma/mmp_tdma.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/dma/mmp_tdma.c b/drivers/dma/mmp_tdma.c
+index e7d1e12bf464..10117f271b12 100644
+--- a/drivers/dma/mmp_tdma.c
++++ b/drivers/dma/mmp_tdma.c
+@@ -544,6 +544,9 @@ static void mmp_tdma_issue_pending(struct dma_chan *chan)
+ 
+ static int mmp_tdma_remove(struct platform_device *pdev)
+ {
++	if (pdev->dev.of_node)
++		of_dma_controller_free(pdev->dev.of_node);
++
+ 	return 0;
+ }
+ 
+-- 
+2.24.0
+
+.0
+

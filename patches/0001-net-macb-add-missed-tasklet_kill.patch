@@ -1,0 +1,35 @@
+From 499c25f9147485e16681d429fb9f1ff51ba41080 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Thu, 28 Nov 2019 09:52:33 +0800
+Subject: [PATCH net v4] net: macb: add missed tasklet_kill
+
+This driver forgets to kill tasklet in remove.
+Add the call to fix it.
+
+Fixes: 032dc41ba6e2 ("net: macb: Handle HRESP error")
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+Changes in v4:
+  - Put tasklet_kill after unregister_netdev to ensure
+    IRQs are disabled when killing tasklet.
+
+ drivers/net/ethernet/cadence/macb_main.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/net/ethernet/cadence/macb_main.c b/drivers/net/ethernet/cadence/macb_main.c
+index d5ae2e1e0b0e..9c767ee252ac 100644
+--- a/drivers/net/ethernet/cadence/macb_main.c
++++ b/drivers/net/ethernet/cadence/macb_main.c
+@@ -4422,6 +4422,7 @@ static int macb_remove(struct platform_device *pdev)
+ 		mdiobus_free(bp->mii_bus);
+ 
+ 		unregister_netdev(dev);
++		tasklet_kill(&bp->hresp_err_tasklet);
+ 		pm_runtime_disable(&pdev->dev);
+ 		pm_runtime_dont_use_autosuspend(&pdev->dev);
+ 		if (!pm_runtime_suspended(&pdev->dev)) {
+-- 
+2.24.0
+
+.0
+

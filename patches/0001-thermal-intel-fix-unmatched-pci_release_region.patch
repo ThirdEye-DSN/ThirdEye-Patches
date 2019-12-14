@@ -1,0 +1,34 @@
+From 1d87eb6f59fd1608d3db5a9fc51f464b2790d0fa Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Fri, 6 Dec 2019 15:18:19 +0800
+Subject: [PATCH] thermal: intel: fix unmatched pci_release_region
+
+The driver calls pci_request_regions() in probe and uses
+pci_release_regions() in probe failure.
+However, it calls pci_release_region() in remove, which does
+match the other two calls.
+Use pci_release_regions() instead to unify them.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/thermal/intel/intel_pch_thermal.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/thermal/intel/intel_pch_thermal.c b/drivers/thermal/intel/intel_pch_thermal.c
+index 4f0bb8f502e1..5f7798b8d35f 100644
+--- a/drivers/thermal/intel/intel_pch_thermal.c
++++ b/drivers/thermal/intel/intel_pch_thermal.c
+@@ -365,7 +365,7 @@ static void intel_pch_thermal_remove(struct pci_dev *pdev)
+ 	thermal_zone_device_unregister(ptd->tzd);
+ 	iounmap(ptd->hw_base);
+ 	pci_set_drvdata(pdev, NULL);
+-	pci_release_region(pdev, 0);
++	pci_release_regions(pdev);
+ 	pci_disable_device(pdev);
+ }
+ 
+-- 
+2.24.0
+
+.0
+

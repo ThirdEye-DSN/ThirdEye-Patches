@@ -1,0 +1,61 @@
+From 8d003c51ea0fd521bebb01cbcaf1a15eda1433a2 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Mon, 18 Nov 2019 16:58:30 +0800
+Subject: [PATCH] usb: dwc3: meson-g12a: add missed regulator_disable
+
+The driver forgets to disable the regulator in probe failure and remove.
+Add the missed calls to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/usb/dwc3/dwc3-meson-g12a.c | 11 ++++++++---
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/usb/dwc3/dwc3-meson-g12a.c b/drivers/usb/dwc3/dwc3-meson-g12a.c
+index 8a3ec1a951fe..d9723d1ad8eb 100644
+--- a/drivers/usb/dwc3/dwc3-meson-g12a.c
++++ b/drivers/usb/dwc3/dwc3-meson-g12a.c
+@@ -458,7 +458,7 @@ static int dwc3_meson_g12a_probe(struct platform_device *pdev)
+ 						dwc3_meson_g12a_irq_thread,
+ 						IRQF_ONESHOT, pdev->name, priv);
+ 		if (ret)
+-			return ret;
++			goto err_regulator_disable;
+ 	}
+ 
+ 	dwc3_meson_g12a_usb_init(priv);
+@@ -467,7 +467,7 @@ static int dwc3_meson_g12a_probe(struct platform_device *pdev)
+ 	for (i = 0 ; i < PHY_COUNT ; ++i) {
+ 		ret = phy_init(priv->phys[i]);
+ 		if (ret)
+-			return ret;
++			goto err_regulator_disable;
+ 	}
+ 
+ 	/* Set PHY Power */
+@@ -517,7 +517,9 @@ static int dwc3_meson_g12a_probe(struct platform_device *pdev)
+ err_phys_exit:
+ 	for (i = 0 ; i < PHY_COUNT ; ++i)
+ 		phy_exit(priv->phys[i]);
+-
++err_regulator_disable:
++	if (priv->vbus)
++		regulator_disable(priv->vbus);
+ 	return ret;
+ }
+ 
+@@ -536,6 +538,9 @@ static int dwc3_meson_g12a_remove(struct platform_device *pdev)
+ 		phy_exit(priv->phys[i]);
+ 	}
+ 
++	if (priv->vbus)
++		regulator_disable(priv->vbus);
++
+ 	pm_runtime_disable(dev);
+ 	pm_runtime_put_noidle(dev);
+ 	pm_runtime_set_suspended(dev);
+-- 
+2.24.0
+
+.0
+

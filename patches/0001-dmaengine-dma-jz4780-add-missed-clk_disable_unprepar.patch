@@ -1,0 +1,31 @@
+From 343e48d4ea47f166f2440076c50b63d660957048 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Tue, 5 Nov 2019 00:05:04 +0800
+Subject: [PATCH] dmaengine: dma-jz4780: add missed clk_disable_unprepare in
+ remove
+
+The remove misses to disable and unprepare jzdma->clk.
+Add a call to clk_disable_unprepare to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/dma/dma-jz4780.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/dma/dma-jz4780.c b/drivers/dma/dma-jz4780.c
+index cafb1cc065bb..66ab76b9520f 100644
+--- a/drivers/dma/dma-jz4780.c
++++ b/drivers/dma/dma-jz4780.c
+@@ -987,6 +987,7 @@ static int jz4780_dma_remove(struct platform_device *pdev)
+ 
+ 	of_dma_controller_free(pdev->dev.of_node);
+ 
++	clk_disable_unprepare(jzdma->clk);
+ 	free_irq(jzdma->irq, jzdma);
+ 
+ 	for (i = 0; i < jzdma->soc_data->nb_channels; i++)
+-- 
+2.23.0
+
+.0
+

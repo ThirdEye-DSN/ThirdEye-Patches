@@ -1,0 +1,38 @@
+From fc9e54ccb84d99c08c3044474d58963bbdf44e84 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Fri, 18 Oct 2019 09:40:45 +0800
+Subject: [PATCH v2] media: st-mipid02: add a check for devm_gpiod_get_optional
+
+mipid02_probe misses a check for devm_gpiod_get_optional and may miss
+the failure.
+Add a check to fix the problem.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+Changes in v2:
+  - Add an error message.
+
+ drivers/media/i2c/st-mipid02.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/drivers/media/i2c/st-mipid02.c b/drivers/media/i2c/st-mipid02.c
+index 81285b8d5cfb..003ba22334cd 100644
+--- a/drivers/media/i2c/st-mipid02.c
++++ b/drivers/media/i2c/st-mipid02.c
+@@ -971,6 +971,11 @@ static int mipid02_probe(struct i2c_client *client)
+ 	bridge->reset_gpio = devm_gpiod_get_optional(dev, "reset",
+ 						     GPIOD_OUT_HIGH);
+ 
++	if (IS_ERR(bridge->reset_gpio)) {
++		dev_err(dev, "failed to get reset GPIO\n");
++		return PTR_ERR(bridge->reset_gpio);
++	}
++
+ 	ret = mipid02_get_regulators(bridge);
+ 	if (ret) {
+ 		dev_err(dev, "failed to get regulators %d", ret);
+-- 
+2.20.1
+
+.1
+

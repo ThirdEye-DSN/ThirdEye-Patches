@@ -1,0 +1,33 @@
+From 2aee60452f93da332fd81158af1d306cb00c2e27 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Fri, 1 Nov 2019 16:31:53 +0800
+Subject: [PATCH] tty: serial: uartlite: use clk_disable_unprepare to match
+ clk_prepare_enable
+
+The driver uses clk_prepare_enable in ulite_probe but uses clk_unprepare
+in ulite_remove, which does not match.
+Replace clk_unprepare with clk_disable_unprepare to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/tty/serial/uartlite.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/tty/serial/uartlite.c b/drivers/tty/serial/uartlite.c
+index 06e79c11141d..3d245827be27 100644
+--- a/drivers/tty/serial/uartlite.c
++++ b/drivers/tty/serial/uartlite.c
+@@ -862,7 +862,7 @@ static int ulite_remove(struct platform_device *pdev)
+ 	struct uartlite_data *pdata = port->private_data;
+ 	int rc;
+ 
+-	clk_unprepare(pdata->clk);
++	clk_disable_unprepare(pdata->clk);
+ 	rc = ulite_release(&pdev->dev);
+ 	pm_runtime_disable(&pdev->dev);
+ 	pm_runtime_set_suspended(&pdev->dev);
+-- 
+2.23.0
+
+.0
+

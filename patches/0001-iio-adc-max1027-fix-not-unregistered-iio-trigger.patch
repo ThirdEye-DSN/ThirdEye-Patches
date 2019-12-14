@@ -1,0 +1,37 @@
+From 9783df820d0686f1dd5c9cbda204a8e36edd30e4 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Mon, 18 Nov 2019 16:51:49 +0800
+Subject: [PATCH] iio: adc: max1027: fix not unregistered iio trigger
+
+The driver forgets to unregister the iio trigger in probe failure and
+remove.
+Use devm API to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/iio/adc/max1027.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/iio/adc/max1027.c b/drivers/iio/adc/max1027.c
+index 214883458582..8caead7dffa5 100644
+--- a/drivers/iio/adc/max1027.c
++++ b/drivers/iio/adc/max1027.c
+@@ -446,7 +446,12 @@ static int max1027_probe(struct spi_device *spi)
+ 	st->trig->ops = &max1027_trigger_ops;
+ 	st->trig->dev.parent = &spi->dev;
+ 	iio_trigger_set_drvdata(st->trig, indio_dev);
+-	iio_trigger_register(st->trig);
++
++	ret = devm_iio_trigger_register(&spi->dev, st->trig);
++	if (ret < 0) {
++		dev_err(&indio_dev->dev, "Failed to register iio trigger\n");
++		return ret;
++	}
+ 
+ 	ret = devm_request_threaded_irq(&spi->dev, spi->irq,
+ 					iio_trigger_generic_data_rdy_poll,
+-- 
+2.24.0
+
+.0
+

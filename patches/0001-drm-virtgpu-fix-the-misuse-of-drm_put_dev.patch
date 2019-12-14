@@ -1,0 +1,32 @@
+From 59ddae8e80ca10801bb0ca584b7136fdf920d648 Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Sat, 9 Nov 2019 15:12:52 +0800
+Subject: [PATCH] drm/virtgpu: fix double unregistration
+
+drm_put_dev also calls drm_dev_unregister, so dev will be unregistered
+twice.
+Replace it with drm_dev_put to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/gpu/drm/virtio/virtgpu_drv.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/virtio/virtgpu_drv.c b/drivers/gpu/drm/virtio/virtgpu_drv.c
+index 0fc32fa0b3c0..fccc24e21af8 100644
+--- a/drivers/gpu/drm/virtio/virtgpu_drv.c
++++ b/drivers/gpu/drm/virtio/virtgpu_drv.c
+@@ -138,7 +138,7 @@ static void virtio_gpu_remove(struct virtio_device *vdev)
+ 
+ 	drm_dev_unregister(dev);
+ 	virtio_gpu_deinit(dev);
+-	drm_put_dev(dev);
++	drm_dev_put(dev);
+ }
+ 
+ static void virtio_gpu_config_changed(struct virtio_device *vdev)
+-- 
+2.23.0
+
+.0
+

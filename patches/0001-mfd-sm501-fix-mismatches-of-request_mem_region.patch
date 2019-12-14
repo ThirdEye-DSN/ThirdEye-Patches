@@ -1,0 +1,92 @@
+From ef16f11027c2d9a7fb209e3238a52706e474449c Mon Sep 17 00:00:00 2001
+From: Third Eye <dsnthirdeye@gmail.com>
+Date: Thu, 5 Dec 2019 23:19:36 +0800
+Subject: [PATCH resend] mfd: sm501: fix mismatches of request_mem_region
+
+This driver misuses release_resource + kfree to match request_mem_region,
+which is incorrect.
+The right way is to use release_mem_region.
+Replace the mismatched calls with the right ones to fix it.
+
+Signed-off-by: Third Eye <dsnthirdeye@gmail.com>
+---
+ drivers/mfd/sm501.c | 19 +++++++------------
+ 1 file changed, 7 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/mfd/sm501.c b/drivers/mfd/sm501.c
+index 154270f8d8d7..e49787e6bb93 100644
+--- a/drivers/mfd/sm501.c
++++ b/drivers/mfd/sm501.c
+@@ -1086,8 +1086,7 @@ static int sm501_register_gpio(struct sm501_devdata *sm)
+ 	iounmap(gpio->regs);
+ 
+  err_claimed:
+-	release_resource(gpio->regs_res);
+-	kfree(gpio->regs_res);
++	release_mem_region(iobase, 0x20);
+ 
+ 	return ret;
+ }
+@@ -1095,6 +1094,7 @@ static int sm501_register_gpio(struct sm501_devdata *sm)
+ static void sm501_gpio_remove(struct sm501_devdata *sm)
+ {
+ 	struct sm501_gpio *gpio = &sm->gpio;
++	resource_size_t iobase = sm->io_res->start + SM501_GPIO;
+ 
+ 	if (!sm->gpio.registered)
+ 		return;
+@@ -1103,8 +1103,7 @@ static void sm501_gpio_remove(struct sm501_devdata *sm)
+ 	gpiochip_remove(&gpio->high.gpio);
+ 
+ 	iounmap(gpio->regs);
+-	release_resource(gpio->regs_res);
+-	kfree(gpio->regs_res);
++	release_mem_region(iobase, 0x20);
+ }
+ 
+ static inline int sm501_gpio_isregistered(struct sm501_devdata *sm)
+@@ -1427,8 +1426,7 @@ static int sm501_plat_probe(struct platform_device *dev)
+ 	return sm501_init_dev(sm);
+ 
+  err_claim:
+-	release_resource(sm->regs_claim);
+-	kfree(sm->regs_claim);
++	release_mem_region(sm->io_res->start, 0x100);
+  err_res:
+ 	kfree(sm);
+  err1:
+@@ -1637,8 +1635,7 @@ static int sm501_pci_probe(struct pci_dev *dev,
+ 	return 0;
+ 
+  err4:
+-	release_resource(sm->regs_claim);
+-	kfree(sm->regs_claim);
++	release_mem_region(sm->io_res->start, 0x100);
+  err3:
+ 	pci_disable_device(dev);
+  err2:
+@@ -1673,8 +1670,7 @@ static void sm501_pci_remove(struct pci_dev *dev)
+ 	sm501_dev_remove(sm);
+ 	iounmap(sm->regs);
+ 
+-	release_resource(sm->regs_claim);
+-	kfree(sm->regs_claim);
++	release_mem_region(sm->io_res->start, 0x100);
+ 
+ 	pci_disable_device(dev);
+ }
+@@ -1686,8 +1682,7 @@ static int sm501_plat_remove(struct platform_device *dev)
+ 	sm501_dev_remove(sm);
+ 	iounmap(sm->regs);
+ 
+-	release_resource(sm->regs_claim);
+-	kfree(sm->regs_claim);
++	release_mem_region(sm->io_res->start, 0x100);
+ 
+ 	return 0;
+ }
+-- 
+2.24.0
+
+.0
+
